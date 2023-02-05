@@ -6,6 +6,7 @@ from typing import Any, Final, Mapping, Optional
 from homeassistant.components.sensor import (
     ENTITY_ID_FORMAT,
     STATE_CLASS_MEASUREMENT,
+    SensorDeviceClass,
     SensorEntity,
 )
 from homeassistant.const import CONF_NAME, CONF_SENSORS
@@ -23,6 +24,7 @@ from .const import (
     ICON_POOR,
     LEVEL_EXCELLENT,
     LEVEL_GOOD,
+    LEVEL_FAIR,
     LEVEL_INADEQUATE,
     LEVEL_POOR,
 )
@@ -71,14 +73,22 @@ class IaqukSensor(SensorEntity):
 
         self._attr_unique_id = f"{controller.unique_id}_{sensor_type}"
         self._attr_name = f"{controller.name} {SENSORS[sensor_type]}"
-        self._attr_state_class = STATE_CLASS_MEASUREMENT
-        self._attr_device_class = (
-            f"{DOMAIN}__level" if sensor_type == SENSOR_LEVEL else None
-        )
-        self._attr_native_unit_of_measurement = (
-            "IAQI" if sensor_type == SENSOR_INDEX else None
-        )
-        self._attr_icon = ICON_DEFAULT if sensor_type == SENSOR_INDEX else ICON_FAIR
+
+        if sensor_type == SENSOR_INDEX:
+            self._attr_icon = ICON_DEFAULT
+            self._attr_state_class = STATE_CLASS_MEASUREMENT
+            self._attr_device_class = SensorDeviceClass.AQI
+
+        if sensor_type == SENSOR_LEVEL:
+            self._attr_icon = ICON_FAIR
+            self._attr_device_class = SensorDeviceClass.ENUM
+            self._attr_options = [
+                LEVEL_EXCELLENT,
+                LEVEL_GOOD,
+                LEVEL_FAIR,
+                LEVEL_POOR,
+                LEVEL_INADEQUATE,
+            ]
 
     async def async_added_to_hass(self):
         """Register callbacks."""
